@@ -441,6 +441,7 @@ class SegmentationService extends PubSubService {
               },
         cachedStats: {
           info: `S${displaySet.SeriesNumber}: ${displaySet.SeriesDescription}`,
+          labelFallbackSuffix: `S:${displaySet.SeriesNumber} ${displaySet.Modality}`,
         },
       },
     };
@@ -584,6 +585,9 @@ class SegmentationService extends PubSubService {
       config: {
         label: segDisplaySet.SeriesDescription,
         segments,
+        cachedStats: {
+          labelFallbackSuffix: `S:${segDisplaySet.SeriesNumber} ${segDisplaySet.Modality}`,
+        },
       },
     };
 
@@ -664,6 +668,9 @@ class SegmentationService extends PubSubService {
       },
       config: {
         label: rtDisplaySet.SeriesDescription,
+        cachedStats: {
+          labelFallbackSuffix: `S:${rtDisplaySet.SeriesNumber} ${rtDisplaySet.Modality}`,
+        },
       },
     };
 
