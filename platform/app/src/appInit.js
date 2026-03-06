@@ -50,6 +50,10 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
   appConfig.peerImport ||= peerImport;
   appConfig.measurementTrackingMode ||= 'standard';
   appConfig.routerBasename ||= publicUrl;
+  // Default: use legacy OHIF MetadataProvider when not specified
+  if (appConfig.useLegacyMetadataProvider === undefined) {
+    appConfig.useLegacyMetadataProvider = true;
+  }
 
   const extensionManager = new ExtensionManager({
     commandsManager,
@@ -91,7 +95,21 @@ async function appInit(appConfigOrFunc, defaultExtensions, defaultModes) {
    * Example2: [[ext1, config], ext2, [ext3, config]]
    */
   const loadedExtensions = await loadModules([...defaultExtensions, ...appConfig.extensions]);
-  await extensionManager.registerExtensions(loadedExtensions, appConfig.dataSources);
+  // Merge app-level useLegacyMetadataProvider into each dicomweb data source config
+  const dataSources = (appConfig.dataSources || []).map(ds => {
+    if (ds.configuration && ds.namespace?.includes('dicomweb')) {
+      return {
+        ...ds,
+        configuration: {
+          ...ds.configuration,
+          useLegacyMetadataProvider:
+            ds.configuration.useLegacyMetadataProvider ?? appConfig.useLegacyMetadataProvider,
+        },
+      };
+    }
+    return ds;
+  });
+  await extensionManager.registerExtensions(loadedExtensions, dataSources);
 
   // TODO: We no longer use `utils.addServer`
   // TODO: We no longer init webWorkers at app level
