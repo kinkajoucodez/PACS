@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pacs-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    networks:
+      - pacs-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  orthanc:
+    image: orthancteam/orthanc
+    container_name: pacs-orthanc
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '${ORTHANC_DICOM_PORT:-4242}:4242'
+      - '${ORTHANC_HTTP_PORT:-8042}:8042'
+    volumes:
+      - ./docker/orthanc/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - orthanc-data:/var/lib/orthanc/db
+    networks:
+      - pacs-network
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: pacs-keycloak
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-keycloak_admin_password}
+      KC_DB: ${KC_DB:-postgres}
+      KC_DB_URL: ${KC_DB_URL:-jdbc:postgresql://postgres:5432/keycloak}
+      KC_DB_USERNAME: ${POSTGRES_USER:-postgres}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./docker/keycloak/pacs-realm.json:/opt/keycloak/data/import/pacs-realm.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pacs-network
+    restart: unless-stopped
+
+  ohif:
+    build:
+      context: .
+      dockerfile: docker/ohif/Dockerfile
+    container_name: pacs-ohif
+    ports:
+      - '${OHIF_PORT:-3000}:3000'
+    depends_on:
+      - orthanc
+    networks:
+      - pacs-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: pacs-nginx
+    ports:
+      - '${NGINX_PORT:-80}:80'
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - ohif
+      - orthanc
+      - keycloak
+    networks:
+      - pacs-network
+    restart: unless-stopped
+
+networks:
+  pacs-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  orthanc-data:
