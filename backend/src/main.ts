@@ -48,6 +48,13 @@ async function bootstrap() {
     .addTag('Providers', 'Healthcare provider management endpoints')
     .addTag('Studies', 'DICOM study management endpoints')
     .addTag('Reports', 'Radiology report management endpoints')
+    .addTag('Report Templates', 'Report template management endpoints')
+    .addTag('SLA Configuration', 'SLA configuration management endpoints')
+    .addTag('Billing', 'Billing records and invoice endpoints')
+    .addTag('Disputes', 'Report dispute management endpoints')
+    .addTag('Ratings', 'Radiologist rating endpoints')
+    .addTag('Audit', 'Audit log viewer endpoints')
+    .addTag('Notifications', 'Notification endpoints')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

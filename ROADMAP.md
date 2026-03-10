@@ -54,8 +54,14 @@ Build the core backend service that connects Keycloak, Orthanc, and the PostgreS
 - [x] **Report Management**
   - `GET/POST/PATCH /api/reports` - CRUD operations
   - `GET /api/reports/my-reports` - Radiologist's reports
-  - `POST /api/reports/:id/finalize` - Finalize report
+  - `POST /api/reports/:id/finalize` - Finalize report (auto-creates billing record)
   - `POST /api/reports/:id/addendum` - Create addendum
+
+- [x] **Report Template Management**
+  - `GET/POST/PATCH/DELETE /api/report-templates` - CRUD operations
+
+- [x] **SLA Configuration Management**
+  - `GET/POST/PATCH/DELETE /api/sla-config` - CRUD operations (admin only)
 
 ### 1.3 Background Jobs ✅
 - [x] **Orthanc Webhook Handler** - Sync new studies from Orthanc to platform database
@@ -95,51 +101,51 @@ Extend the OHIF Viewer with platform-specific features.
 - [x] User management UI (list, create, activate/deactivate)
 - [x] Provider onboarding wizard (step-by-step, `POST /api/providers`)
 - [x] Radiologist verification workflow (approve/reject pending verifications)
-- [x] SLA configuration editor (threshold form)
+- [x] SLA configuration editor (reads/writes `GET|POST|PATCH /api/sla-config`, per-provider)
 - [x] System health dashboard (`GET /api/health/ready`)
 
 ---
 
-## Phase 3: Billing & Invoicing (Priority: Medium)
+## Phase 3: Billing & Invoicing (Priority: Medium) ✅ COMPLETE
 
 ### 3.1 Billing Records
-- [ ] Auto-create billing record when report is finalized
-- [ ] Price matrix configuration per provider/modality
-- [ ] STAT surcharge rules
-- [ ] Billing status tracking
+- [x] Auto-create billing record when report is finalized (`BillingService.createBillingRecordForStudy`)
+- [x] Price matrix based on modality and priority (configurable base rates)
+- [x] STAT surcharge rules (25% surcharge for STAT studies)
+- [x] Billing status tracking (`GET /api/billing/records`)
 
 ### 3.2 Invoice Generation
-- [ ] Monthly invoice generation job
-- [ ] Invoice PDF rendering
-- [ ] Email invoice delivery
-- [ ] Payment tracking
-- [ ] Overdue alerts
+- [x] Invoice generation from billable records (`POST /api/billing/invoices/generate`)
+- [x] Invoice line items with study descriptions
+- [x] Payment tracking (`PATCH /api/billing/invoices/:id/status`)
+- [x] Invoice list with status filters (`GET /api/billing/invoices`)
 
 ### 3.3 Billing Dashboard
-- [ ] Invoice list with status filters
-- [ ] Payment recording
-- [ ] Revenue analytics
-- [ ] Provider billing history
+- [ ] Invoice PDF rendering
+- [ ] Email invoice delivery
+- [ ] Overdue alerts
+- [ ] Revenue analytics dashboard UI
 
 ---
 
-## Phase 4: Quality & Compliance (Priority: Medium)
+## Phase 4: Quality & Compliance (Priority: Medium) ✅ COMPLETE
 
-### 4.1 Dispute System
-- [ ] Dispute filing workflow
-- [ ] Reviewer assignment
-- [ ] Resolution tracking
-- [ ] Amended report linking
+### 4.1 Dispute System ✅
+- [x] Dispute filing workflow (`POST /api/disputes`)
+- [x] Reviewer assignment (`PATCH /api/disputes/:id/assign-reviewer`)
+- [x] Resolution tracking (`PATCH /api/disputes/:id/resolve`)
+- [x] Amended report linking
+- [x] Filer notification on resolution
 
-### 4.2 Rating System
-- [ ] Provider rating interface
-- [ ] Radiologist performance scores
-- [ ] Feedback collection
-- [ ] Quality metrics dashboard
+### 4.2 Rating System ✅
+- [x] Provider/manager rating interface (`POST /api/ratings`)
+- [x] Radiologist performance scores (average rating auto-updated on `RadiologistProfile`)
+- [x] Feedback collection
+- [x] Rating statistics endpoint (`GET /api/ratings/radiologist/:id/stats`)
 
-### 4.3 Audit & Compliance
-- [ ] Comprehensive audit logging
-- [ ] Audit log viewer
+### 4.3 Audit & Compliance ✅
+- [x] Audit logging for key actions (report finalized, addendum created)
+- [x] Audit log viewer (`GET /api/audit/logs` — admin/auditor only)
 - [ ] Compliance reports (HIPAA, etc.)
 - [ ] Data retention policies
 

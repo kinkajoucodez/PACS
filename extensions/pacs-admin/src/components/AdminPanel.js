@@ -75,6 +75,16 @@ const getApiClient = () => {
     },
     createProvider: data =>
       req('/providers', { method: 'POST', body: JSON.stringify(data) }),
+    getSlaConfigs: params => {
+      const qs = new URLSearchParams(params).toString();
+      return req(`/sla-config${qs ? `?${qs}` : ''}`);
+    },
+    createSlaConfig: data =>
+      req('/sla-config', { method: 'POST', body: JSON.stringify(data) }),
+    updateSlaConfig: (id, data) =>
+      req(`/sla-config/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    deleteSlaConfig: id =>
+      req(`/sla-config/${id}`, { method: 'DELETE' }),
   };
 };
 
@@ -718,47 +728,131 @@ const DEFAULT_SLA_HOURS = {
 };
 
 function SlaSection() {
+  const api = getApiClient();
+  const [providers, setProviders] = useState([]);
+  const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [configs, setConfigs] = useState([]);
   const [values, setValues] = useState(DEFAULT_SLA_HOURS);
+  const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSave = e => {
+  // Load providers on mount
+  useEffect(() => {
+    api.getProviders({ limit: 100 }).then(res => {
+      setProviders(res.data || []);
+    }).catch(() => {});
+  }, []);
+
+  // Load SLA configs when a provider is selected
+  useEffect(() => {
+    if (!selectedProviderId) {
+      setConfigs([]);
+      setValues(DEFAULT_SLA_HOURS);
+      return;
+    }
+    setLoading(true);
+    api.getSlaConfigs({ providerId: selectedProviderId })
+      .then(result => {
+        const list = Array.isArray(result) ? result : (result.data || []);
+        setConfigs(list);
+        // Pre-fill form with loaded values
+        const filled = { ...DEFAULT_SLA_HOURS };
+        list.forEach(c => {
+          if (filled[c.priority] !== undefined) {
+            filled[c.priority] = Number(c.targetHours);
+          }
+        });
+        setValues(filled);
+      })
+      .catch(() => setError('Failed to load SLA configurations'))
+      .finally(() => setLoading(false));
+  }, [selectedProviderId]);
+
+  const handleSave = async e => {
     e.preventDefault();
-    // SLA config is managed via environment variables / DB; this form
-    // documents the current thresholds and would call a future PATCH endpoint.
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (!selectedProviderId) {
+      setError('Please select a provider first');
+      return;
+    }
+    setError('');
+    setLoading(true);
+
+    try {
+      await Promise.all(
+        Object.entries(values).map(async ([priority, targetHours]) => {
+          const existing = configs.find(c => c.priority === priority && !c.modality);
+          if (existing) {
+            return api.updateSlaConfig(existing.id, { targetHours });
+          } else {
+            return api.createSlaConfig({
+              providerId: selectedProviderId,
+              priority,
+              targetHours,
+            });
+          }
+        })
+      );
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      // Reload configs
+      const refreshed = await api.getSlaConfigs({ providerId: selectedProviderId });
+      const list = Array.isArray(refreshed) ? refreshed : (refreshed.data || []);
+      setConfigs(list);
+    } catch (err) {
+      setError(err.message || 'Failed to save SLA configuration');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="admin-section">
       <h3>SLA Thresholds</h3>
       <p className="admin-hint">
-        Configure the maximum turnaround time (in hours) for each study priority.
+        Configure the maximum turnaround time (in hours) for each study priority per provider.
         These values are used by the SLA monitor to detect breaches and send alerts.
       </p>
+      <div className="form-row">
+        <label>Provider</label>
+        <select
+          value={selectedProviderId}
+          onChange={e => setSelectedProviderId(e.target.value)}
+        >
+          <option value="">— select provider —</option>
+          {providers.map(p => (
+            <option key={p.id} value={p.id}>{p.name} ({p.code})</option>
+          ))}
+        </select>
+      </div>
+      {error && <div className="admin-error">{error}</div>}
       {saved && <div className="admin-success">✓ SLA configuration saved.</div>}
-      <form className="admin-form" onSubmit={handleSave}>
-        {Object.entries(values).map(([priority, hours]) => (
-          <div className="form-row" key={priority}>
-            <label>{priority.replace('_', ' ').toUpperCase()} (hours)</label>
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              value={hours}
-              onChange={e =>
-                setValues(v => ({
-                  ...v,
-                  [priority]: parseFloat(e.target.value) || 0,
-                }))
-              }
-            />
-          </div>
-        ))}
-        <button type="submit" className="admin-btn btn-primary">
-          Save SLA Config
-        </button>
-      </form>
+      {loading && <div className="admin-loading">Loading…</div>}
+      {selectedProviderId && !loading && (
+        <form className="admin-form" onSubmit={handleSave}>
+          {Object.entries(values).map(([priority, hours]) => (
+            <div className="form-row" key={priority}>
+              <label>{priority.replace('_', ' ').toUpperCase()} (hours)</label>
+              <input
+                type="number"
+                min={0.5}
+                step={0.5}
+                value={hours}
+                onChange={e => {
+                  const parsed = parseFloat(e.target.value);
+                  setValues(v => ({
+                    ...v,
+                    [priority]: !isNaN(parsed) && parsed >= 0.5 ? parsed : v[priority],
+                  }));
+                }}
+              />
+            </div>
+          ))}
+          <button type="submit" className="admin-btn btn-primary" disabled={loading}>
+            {loading ? 'Saving…' : 'Save SLA Config'}
+          </button>
+        </form>
+      )}
     </div>
   );
 }
