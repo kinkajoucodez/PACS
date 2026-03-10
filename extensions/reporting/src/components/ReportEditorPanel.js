@@ -5,16 +5,14 @@ import './ReportEditorPanel.css';
 /* eslint-disable no-console */
 
 /**
- * Get the pacsApiService from the platform viewer services.
+ * Get the pacsApiService - use fallback client for better portability.
+ * The fallback client implements all necessary API methods and uses
+ * the same token retrieval mechanism as the main service.
  */
 const getPacsApiService = () => {
-  try {
-    const services = require('../../../../platform/viewer/src/services');
-    return services.pacsApiService;
-  } catch {
-    console.warn('pacsApiService not found, using fallback client');
-    return createFallbackApiService();
-  }
+  // Always use the fallback client for extension portability
+  // This avoids tight coupling to the viewer's internal module structure
+  return createFallbackApiService();
 };
 
 /**
@@ -173,7 +171,7 @@ const REPORT_TEMPLATES = {
 /**
  * Auto-save debounce delay in milliseconds
  */
-const AUTO_SAVE_DELAY = 30000; // 30 seconds
+const AUTO_SAVE_DELAY = 10000; // 10 seconds for better UX
 
 /**
  * ReportEditorPanel Component
@@ -339,6 +337,30 @@ const ReportEditorPanel = ({ servicesManager }) => {
     }
     setHasUnsavedChanges(true);
   }, []);
+
+  /**
+   * Show notification using the services manager or fallback
+   */
+  const showNotification = useCallback(
+    (message, type = 'info') => {
+      try {
+        const { UINotificationService } = servicesManager.services;
+        if (UINotificationService) {
+          UINotificationService.show({
+            title: 'Report Editor',
+            message,
+            type,
+            duration: 4000,
+          });
+          return;
+        }
+      } catch {
+        // Fallback - just log
+      }
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    },
+    [servicesManager]
+  );
 
   /**
    * Apply a template to the report
@@ -548,30 +570,6 @@ const ReportEditorPanel = ({ servicesManager }) => {
       }
     },
     [selectedStudyId, showNotification]
-  );
-
-  /**
-   * Show notification using the services manager or fallback
-   */
-  const showNotification = useCallback(
-    (message, type = 'info') => {
-      try {
-        const { UINotificationService } = servicesManager.services;
-        if (UINotificationService) {
-          UINotificationService.show({
-            title: 'Report Editor',
-            message,
-            type,
-            duration: 4000,
-          });
-          return;
-        }
-      } catch {
-        // Fallback - just log
-      }
-      console.log(`[${type.toUpperCase()}] ${message}`);
-    },
-    [servicesManager]
   );
 
   /**
