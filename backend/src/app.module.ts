@@ -9,6 +9,12 @@ import { StudiesModule } from './studies';
 import { ReportsModule } from './reports';
 import { JobsModule } from './jobs';
 import { NotificationsModule } from './notifications';
+import { SlaConfigModule } from './sla-config';
+import { ReportTemplatesModule } from './report-templates';
+import { BillingModule } from './billing';
+import { DisputesModule } from './disputes';
+import { RatingsModule } from './ratings';
+import { AuditModule } from './audit';
 
 @Module({
   imports: [
@@ -25,6 +31,12 @@ import { NotificationsModule } from './notifications';
     ReportsModule,
     JobsModule,
     NotificationsModule,
+    SlaConfigModule,
+    ReportTemplatesModule,
+    BillingModule,
+    DisputesModule,
+    RatingsModule,
+    AuditModule,
   ],
 })
 export class AppModule {}

@@ -14,10 +14,16 @@ import {
 } from './dto';
 import { PaginationDto, PaginatedResponseDto } from '../common/dto';
 import { ReportStatus, StudyStatus, AssignmentStatus } from '@prisma/client';
+import { BillingService } from '../billing/billing.service';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class ReportsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private billingService: BillingService,
+    private auditService: AuditService,
+  ) {}
 
   async findAll(
     paginationDto: PaginationDto,
@@ -320,6 +326,27 @@ export class ReportsService {
       return finalizedReport;
     });
 
+    // Auto-create a billing record (best-effort, after the transaction)
+    const studyForBilling = updatedReport.study as any;
+    if (studyForBilling?.providerId) {
+      await this.billingService.createBillingRecordForStudy(
+        report.studyId,
+        studyForBilling.providerId,
+        userId,
+        studyForBilling.modality ?? null,
+        studyForBilling.priority,
+      );
+    }
+
+    // Audit log
+    await this.auditService.log({
+      userId,
+      action: 'REPORT_FINALIZED',
+      resourceType: 'report',
+      resourceId: id,
+      details: { status: finalStatus, studyId: report.studyId },
+    });
+
     return updatedReport;
   }
 
@@ -381,6 +408,15 @@ export class ReportsService {
       });
 
       return addendumReport;
+    });
+
+    // Audit log
+    await this.auditService.log({
+      userId,
+      action: 'REPORT_ADDENDUM_CREATED',
+      resourceType: 'report',
+      resourceId: addendum.id,
+      details: { parentReportId: id, studyId: originalReport.studyId },
     });
 
     return addendum;

@@ -115,8 +115,46 @@ docker run -p 3001:3001 pacs-backend
 - `GET /api/reports/:id` - Get report details
 - `POST /api/reports` - Create new report
 - `PATCH /api/reports/:id` - Update draft report
-- `POST /api/reports/:id/finalize` - Finalize report
+- `POST /api/reports/:id/finalize` - Finalize report (auto-creates a billing record)
 - `POST /api/reports/:id/addendum` - Create report addendum
+
+### Report Templates
+- `GET /api/report-templates` - List templates (filterable by provider, modality, body part)
+- `GET /api/report-templates/:id` - Get template details
+- `POST /api/report-templates` - Create template (admin or provider_manager only)
+- `PATCH /api/report-templates/:id` - Update template (admin or provider_manager only)
+- `DELETE /api/report-templates/:id` - Delete template (admin only)
+
+### SLA Configuration
+- `GET /api/sla-config` - List SLA configurations (filterable by provider, modality, priority)
+- `GET /api/sla-config/:id` - Get SLA configuration by ID
+- `POST /api/sla-config` - Create SLA configuration (admin only)
+- `PATCH /api/sla-config/:id` - Update SLA configuration (admin only)
+- `DELETE /api/sla-config/:id` - Delete SLA configuration (admin only)
+
+### Billing
+- `GET /api/billing/records` - List billing records (admin or billing_officer only)
+- `GET /api/billing/records/:id` - Get billing record details
+- `GET /api/billing/invoices` - List invoices (admin or billing_officer only)
+- `GET /api/billing/invoices/:id` - Get invoice with line items
+- `POST /api/billing/invoices/generate` - Generate invoice for a provider/period
+- `PATCH /api/billing/invoices/:id/status` - Update invoice status (send, pay, etc.)
+
+### Disputes
+- `GET /api/disputes` - List disputes (admin, support, auditor, provider_manager)
+- `GET /api/disputes/:id` - Get dispute details
+- `POST /api/disputes` - File a dispute on a finalized report
+- `PATCH /api/disputes/:id/assign-reviewer` - Assign reviewer (admin or support)
+- `PATCH /api/disputes/:id/resolve` - Resolve dispute (admin, support, or auditor)
+
+### Ratings
+- `GET /api/ratings` - List ratings (filterable by radiologist, study, stars)
+- `GET /api/ratings/radiologist/:radiologistId/stats` - Get rating stats for a radiologist
+- `GET /api/ratings/:id` - Get rating details
+- `POST /api/ratings` - Submit a rating for a finalized study report
+
+### Audit
+- `GET /api/audit/logs` - View audit logs (admin or auditor only)
 
 ## API Documentation
 
@@ -133,10 +171,15 @@ The backend uses Prisma ORM with the following main entities:
 - `HealthcareProvider` - Healthcare facilities
 - `Study` - DICOM studies
 - `StudyAssignment` - Study-to-radiologist assignments
+- `SlaConfiguration` - Per-provider SLA thresholds
+- `SlaTracking` - Per-study SLA monitoring
+- `ReportTemplate` - Reusable report templates
 - `Report` - Radiology reports
-- `SlaTracking` - SLA monitoring
-- `BillingRecord` - Per-study billing
-- `Invoice` - Provider invoices
+- `Dispute` - Report disputes
+- `Rating` - Radiologist ratings
+- `BillingRecord` - Per-study billing (auto-created on report finalization)
+- `Invoice` - Provider invoices with line items
+- `InvoiceItem` - Invoice line items
 - `AuditLog` - Activity logging
 - `Notification` - User notifications
 
@@ -159,11 +202,20 @@ npm run test:cov
 backend/
 ├── src/
 │   ├── auth/           # JWT authentication
+│   ├── audit/          # Audit log recording and viewer
+│   ├── billing/        # Billing records and invoice management
 │   ├── common/         # Shared utilities, guards, filters
+│   ├── disputes/       # Report dispute workflow
 │   ├── health/         # Health check endpoints
+│   ├── jobs/           # Background jobs (SLA monitor, auto-assignment)
+│   ├── notifications/  # Real-time + email notification dispatch
+│   ├── orthanc/        # Orthanc REST client
 │   ├── prisma/         # Prisma service
 │   ├── providers/      # Healthcare provider module
+│   ├── ratings/        # Radiologist rating management
+│   ├── report-templates/ # Report template CRUD
 │   ├── reports/        # Report management module
+│   ├── sla-config/     # SLA configuration CRUD
 │   ├── studies/        # Study management module
 │   ├── users/          # User management module
 │   ├── app.module.ts   # Root module
