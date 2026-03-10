@@ -464,3 +464,83 @@
     max-width: 150px;
   }
 }
+
+/* Modal Input Dialog Styles */
+.reason-input-modal {
+  padding: 16px;
+  min-width: 400px;
+}
+
+.reason-input-modal p {
+  margin: 0 0 12px 0;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.reason-textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  border-color: #2d5aa7;
+  box-shadow: 0 0 0 2px rgba(45, 90, 167, 0.2);
+}
+
+.reason-textarea::placeholder {
+  color: #666;
+}
+
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Toast Notification Fallback */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 9999;
+  animation: slideIn 0.3s ease;
+}
+
+.toast-notification.success {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.toast-notification.error {
+  background-color: #dc3545;
+  color: #ffffff;
+}
+
+.toast-notification.info {
+  background-color: #2d5aa7;
+  color: #ffffff;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

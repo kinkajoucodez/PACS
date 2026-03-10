@@ -258,9 +258,27 @@ const WorklistPanel = ({ servicesManager }) => {
    */
   const handleViewStudy = async (study) => {
     // Navigate to the study viewer using the orthanc study ID
+    // Use history-based navigation to stay within SPA if available
     if (study.orthancStudyId || study.studyInstanceUid) {
       const studyId = study.orthancStudyId || study.studyInstanceUid;
-      window.location.href = `/viewer/${studyId}`;
+      
+      // Try to use OHIF's navigation services if available
+      if (servicesManager?.services?.UIViewportDialogService) {
+        // Close the modal and navigate using OHIF router
+        const { UIModalService } = servicesManager.services;
+        if (UIModalService) {
+          UIModalService.hide();
+        }
+      }
+      
+      // Use history API for SPA navigation instead of full reload
+      if (window.history && window.history.pushState) {
+        window.history.pushState({}, '', `/viewer/${studyId}`);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      } else {
+        // Fallback to traditional navigation
+        window.location.href = `/viewer/${studyId}`;
+      }
     }
   };
 
@@ -279,32 +297,125 @@ const WorklistPanel = ({ servicesManager }) => {
   };
 
   const handleReleaseStudy = async (study) => {
-    try {
-      const reason = window.prompt('Reason for releasing this study (optional):') || '';
-      await pacsApiService.releaseStudyAssignment(study.id, reason);
-      fetchWorklist(false);
-      showNotification('Study released successfully', 'success');
-    } catch (err) {
-      console.error('Failed to release study:', err);
-      showNotification(err.message || 'Failed to release study', 'error');
+    // Show a modal dialog for release reason input
+    const { UIModalService } = servicesManager?.services || {};
+    
+    if (UIModalService) {
+      // Use OHIF's modal service for a better UX
+      const ReasonInputModal = ({ onSubmit, onCancel }) => (
+        <div className="reason-input-modal">
+          <p>Reason for releasing this study (optional):</p>
+          <textarea 
+            id="release-reason" 
+            rows="3" 
+            className="reason-textarea"
+            placeholder="Enter reason..."
+          />
+          <div className="modal-buttons">
+            <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+            <button className="btn btn-primary" onClick={() => {
+              const reason = document.getElementById('release-reason')?.value || '';
+              onSubmit(reason);
+            }}>Release</button>
+          </div>
+        </div>
+      );
+
+      UIModalService.show({
+        content: () => (
+          <ReasonInputModal 
+            onSubmit={async (reason) => {
+              UIModalService.hide();
+              try {
+                await pacsApiService.releaseStudyAssignment(study.id, reason);
+                fetchWorklist(false);
+                showNotification('Study released successfully', 'success');
+              } catch (err) {
+                console.error('Failed to release study:', err);
+                showNotification(err.message || 'Failed to release study', 'error');
+              }
+            }}
+            onCancel={() => UIModalService.hide()}
+          />
+        ),
+        title: 'Release Study',
+      });
+    } else {
+      // Fallback to simple confirmation
+      if (window.confirm('Are you sure you want to release this study?')) {
+        try {
+          await pacsApiService.releaseStudyAssignment(study.id, '');
+          fetchWorklist(false);
+          showNotification('Study released successfully', 'success');
+        } catch (err) {
+          console.error('Failed to release study:', err);
+          showNotification(err.message || 'Failed to release study', 'error');
+        }
+      }
     }
   };
 
   const handleFlagStat = async (study) => {
-    try {
-      const reason = window.prompt('Reason for flagging as STAT:');
-      if (reason === null) return; // Cancelled
-      await pacsApiService.flagStudyAsStat(study.id, reason);
-      fetchWorklist(false);
-      showNotification('Study flagged as STAT', 'success');
-    } catch (err) {
-      console.error('Failed to flag study:', err);
-      showNotification(err.message || 'Failed to flag study as STAT', 'error');
+    // Show a modal dialog for STAT reason input
+    const { UIModalService } = servicesManager?.services || {};
+    
+    if (UIModalService) {
+      // Use OHIF's modal service for a better UX
+      const ReasonInputModal = ({ onSubmit, onCancel }) => (
+        <div className="reason-input-modal">
+          <p>Reason for flagging as STAT (required for audit):</p>
+          <textarea 
+            id="stat-reason" 
+            rows="3" 
+            className="reason-textarea"
+            placeholder="Enter reason..."
+          />
+          <div className="modal-buttons">
+            <button className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+            <button className="btn btn-danger" onClick={() => {
+              const reason = document.getElementById('stat-reason')?.value || '';
+              onSubmit(reason);
+            }}>Flag as STAT</button>
+          </div>
+        </div>
+      );
+
+      UIModalService.show({
+        content: () => (
+          <ReasonInputModal 
+            onSubmit={async (reason) => {
+              UIModalService.hide();
+              try {
+                await pacsApiService.flagStudyAsStat(study.id, reason);
+                fetchWorklist(false);
+                showNotification('Study flagged as STAT', 'success');
+              } catch (err) {
+                console.error('Failed to flag study:', err);
+                showNotification(err.message || 'Failed to flag study as STAT', 'error');
+              }
+            }}
+            onCancel={() => UIModalService.hide()}
+          />
+        ),
+        title: 'Flag Study as STAT',
+      });
+    } else {
+      // Fallback to confirm dialog
+      if (window.confirm('Are you sure you want to flag this study as STAT?')) {
+        try {
+          await pacsApiService.flagStudyAsStat(study.id, 'Urgent attention required');
+          fetchWorklist(false);
+          showNotification('Study flagged as STAT', 'success');
+        } catch (err) {
+          console.error('Failed to flag study:', err);
+          showNotification(err.message || 'Failed to flag study as STAT', 'error');
+        }
+      }
     }
   };
 
   /**
-   * Show notification using service manager or alert
+   * Show notification using service manager or console log fallback
    */
   const showNotification = (message, type) => {
     if (servicesManager?.services?.UINotificationService) {
@@ -313,7 +424,10 @@ const WorklistPanel = ({ servicesManager }) => {
         type,
       });
     } else {
-      alert(message);
+      // Log to console and update a local state for feedback
+      console.log(`[${type.toUpperCase()}] ${message}`);
+      // Could show a temporary in-panel notification here
+      setError(type === 'error' ? message : null);
     }
   };
 
@@ -349,11 +463,35 @@ const WorklistPanel = ({ servicesManager }) => {
   };
 
   /**
-   * Get unique modalities from current studies
+   * Get unique modalities - combines current studies with common modalities
    */
-  const getUniqueModalities = () => {
-    const modalities = [...new Set(studies.map(s => s.modality).filter(Boolean))];
-    return modalities.sort();
+  const getModalityOptions = () => {
+    // Common modalities as fallback options
+    const commonModalities = [
+      { value: 'CT', label: 'CT' },
+      { value: 'MR', label: 'MR' },
+      { value: 'XR', label: 'X-Ray' },
+      { value: 'US', label: 'Ultrasound' },
+      { value: 'NM', label: 'Nuclear Medicine' },
+      { value: 'PT', label: 'PET' },
+      { value: 'CR', label: 'CR' },
+      { value: 'DX', label: 'Digital X-Ray' },
+    ];
+
+    // Get unique modalities from current studies
+    const studyModalities = [...new Set(studies.map(s => s.modality).filter(Boolean))];
+    
+    // If we have studies, show only those modalities
+    if (studyModalities.length > 0) {
+      return studyModalities.sort().map(mod => {
+        // Find label from common modalities if available
+        const common = commonModalities.find(c => c.value === mod);
+        return { value: mod, label: common ? common.label : mod };
+      });
+    }
+    
+    // Otherwise, show common modalities as fallback
+    return commonModalities;
   };
 
   // Loading state
@@ -424,15 +562,9 @@ const WorklistPanel = ({ servicesManager }) => {
             className="filter-select"
           >
             <option value="">All</option>
-            {getUniqueModalities().map(mod => (
-              <option key={mod} value={mod}>{mod}</option>
+            {getModalityOptions().map(mod => (
+              <option key={mod.value} value={mod.value}>{mod.label}</option>
             ))}
-            <option value="CT">CT</option>
-            <option value="MR">MR</option>
-            <option value="XR">X-Ray</option>
-            <option value="US">Ultrasound</option>
-            <option value="NM">Nuclear Medicine</option>
-            <option value="PT">PET</option>
           </select>
         </div>
 
