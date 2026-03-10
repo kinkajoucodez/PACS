@@ -110,6 +110,7 @@ open http://localhost
 │   ├── src/                # Source code
 │   │   ├── auth/          # JWT authentication with Keycloak
 │   │   ├── jobs/          # Background jobs (SLA monitor, auto-assignment)
+│   │   ├── notifications/ # Notification delivery (email + WebSocket)
 │   │   ├── users/         # User management
 │   │   ├── providers/     # Healthcare provider management
 │   │   ├── studies/       # DICOM study management
@@ -129,6 +130,9 @@ open http://localhost
 │   └── viewer/            # Main viewer application
 │       └── src/services/  # API service layer
 ├── extensions/            # OHIF extensions
+│   ├── worklist/          # Radiologist worklist with SLA timers
+│   ├── reporting/         # In-viewer radiology report editor
+│   └── pacs-admin/        # Admin dashboard (users, providers, SLA, health)
 ├── docker-compose.yml     # Main compose file
 ├── ROADMAP.md            # Development roadmap
 └── README.md             # This file
@@ -172,6 +176,12 @@ The platform includes a NestJS-based REST API with the following endpoints:
 - `PATCH /api/reports/:id` - Update draft report
 - `POST /api/reports/:id/finalize` - Finalize report
 - `POST /api/reports/:id/addendum` - Create addendum
+
+### Notifications
+- `GET /api/notifications` - List notifications for current user (supports `?isRead=false`)
+- `GET /api/notifications/unread-count` - Get count of unread notifications
+- `PATCH /api/notifications/:id/read` - Mark a notification as read
+- `PATCH /api/notifications/read-all` - Mark all notifications as read
 
 For full API documentation, visit `http://localhost/api/docs` after starting the services.
 
@@ -232,6 +242,40 @@ Automatically assigns unassigned (`received`/`queued`) studies to active radiolo
 
 > The engine also exposes a `triggerImmediateAssignment()` method that can be called from the Orthanc webhook handler to assign a newly ingested study without waiting for the next cron tick.
 
+### Notification Dispatcher (`NotificationDispatcherService`)
+
+Picks up unread notifications every minute and delivers them via two channels:
+
+| Channel | Implementation | Scope |
+|---------|---------------|-------|
+| **WebSocket** | Socket.IO namespace `/notifications` | All unread notifications created in the last 5 minutes |
+| **Email** | Nodemailer (SMTP) | High-priority types: `stat_alert`, `sla_breach`, `dispute_filed` |
+
+**WebSocket client usage**
+
+```javascript
+import { io } from 'socket.io-client';
+
+const socket = io('/notifications', {
+  query: { userId: '<user-uuid>' },
+  auth: { token: '<jwt-token>' },
+});
+
+socket.on('notification:new', notification => {
+  console.log('New notification:', notification);
+});
+```
+
+**SMTP environment variables**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SMTP_HOST` | _(empty — email disabled)_ | SMTP server hostname |
+| `SMTP_PORT` | `587` | SMTP server port |
+| `SMTP_USER` | _(empty)_ | SMTP authentication username |
+| `SMTP_PASS` | _(empty)_ | SMTP authentication password |
+| `SMTP_FROM` | `noreply@pacs-platform.local` | Sender email address |
+
 ## Documentation
 
 - [Backend API Documentation](./backend/README.md) – Backend API setup and endpoints
@@ -256,19 +300,20 @@ See [ROADMAP.md](./ROADMAP.md) for the complete development roadmap.
 
 ### Completed ✅
 - **Backend API** – NestJS REST API with Swagger documentation
-- **Authentication** – Keycloak JWT validation middleware
-- **Core Endpoints** – Users, Providers, Studies, Reports management
-- **Frontend Integration** – API service layer and OIDC configuration
+- **Authentication** – Keycloak JWT validation, token refresh, role-based guards, user profile header
+- **Core Endpoints** – Users, Providers, Studies, Reports, Notifications management
+- **Frontend Integration** – API service layer, OIDC configuration, ProtectedRoute, UserProfile
 - **SLA Monitoring** – Cron job to detect approaching/breached SLA deadlines
 - **Auto-Assignment Engine** – Load-balanced radiologist assignment with escalation
-
-### In Progress 🔄
-- **Worklist Extension** – Radiologist assignment queue
-- **Reporting Extension** – In-viewer report editor
+- **Notification Dispatcher** – Email (SMTP/nodemailer) + WebSocket (Socket.IO) delivery
+- **Worklist Extension** – Radiologist assignment queue with SLA timers and priority indicators
+- **Reporting Extension** – In-viewer report editor with templates, auto-save, finalize workflow
+- **Admin Dashboard** – User management, provider onboarding, radiologist verification, SLA config, health monitoring
 
 ### Upcoming
-- **Notification Dispatcher** – Email/WebSocket delivery for notifications
-- **Admin Dashboard** – User and provider management UI
+- **Billing & Invoicing** – Auto-create billing on report finalization, invoice generation, payment tracking
+- **Quality & Compliance** – Dispute resolution, rating system, audit log viewer
+- **Production Readiness** – Security hardening, observability, high availability, CI/CD
 
 ## Contributing
 

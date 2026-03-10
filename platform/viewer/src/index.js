@@ -31,6 +31,7 @@ import OHIFDicomMicroscopyExtension from '@ohif/extension-dicom-microscopy';
 import OHIFDicomPDFExtension from '@ohif/extension-dicom-pdf';
 import OHIFWorklistExtension from '@ohif/extension-worklist';
 import OHIFReportingExtension from '@ohif/extension-reporting';
+import OHIFPacsAdminExtension from '@ohif/extension-pacs-admin';
 //import OHIFDicomTagBrowserExtension from '@ohif/extension-dicom-tag-browser';
 // Add this for Debugging purposes:
 //import OHIFDebuggingExtension from '@ohif/extension-debugging';
@@ -57,6 +58,7 @@ const appProps = {
     OHIFDicomRtExtension,
     OHIFWorklistExtension,
     OHIFReportingExtension,
+    OHIFPacsAdminExtension,
     //OHIFDebuggingExtension,
     //OHIFDicomTagBrowserExtension,
   ],
