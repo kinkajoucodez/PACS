@@ -59,8 +59,8 @@ Build the core backend service that connects Keycloak, Orthanc, and the PostgreS
 
 ### 1.3 Background Jobs
 - [x] **Orthanc Webhook Handler** - Sync new studies from Orthanc to platform database
-- [ ] **SLA Monitor** - Check SLA deadlines, send warnings, mark breaches
-- [ ] **Auto-Assignment Engine** - Round-robin or load-balanced radiologist assignment
+- [x] **SLA Monitor** - Check SLA deadlines, send warnings, mark breaches
+- [x] **Auto-Assignment Engine** - Round-robin or load-balanced radiologist assignment
 - [ ] **Notification Dispatcher** - Send notifications via email/WebSocket
 
 ---

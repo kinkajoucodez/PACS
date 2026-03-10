@@ -109,6 +109,7 @@ open http://localhost
 ├── backend/                 # Backend API (NestJS)
 │   ├── src/                # Source code
 │   │   ├── auth/          # JWT authentication with Keycloak
+│   │   ├── jobs/          # Background jobs (SLA monitor, auto-assignment)
 │   │   ├── users/         # User management
 │   │   ├── providers/     # Healthcare provider management
 │   │   ├── studies/       # DICOM study management
@@ -174,6 +175,63 @@ The platform includes a NestJS-based REST API with the following endpoints:
 
 For full API documentation, visit `http://localhost/api/docs` after starting the services.
 
+## Background Jobs
+
+The platform runs two background jobs via `@nestjs/schedule`:
+
+### SLA Monitoring (`SlaMonitoringService`)
+
+Checks SLA deadlines for active studies and fires notifications.
+
+| Event | Behaviour |
+|-------|-----------|
+| Warning | Notification sent to the assigned radiologist **and** all admin/support users when the elapsed fraction of the allowed time reaches the configured warning threshold (default 75%). |
+| Breach | `SlaTracking` record updated (`status = breached`, `breachedAt` set) and breach notifications sent to the same recipients. |
+| STAT escalation | An additional `stat_alert` notification is created for admins when a STAT study breaches its SLA. |
+| Untracked studies | Studies without an `SlaTracking` record are checked against built-in priority defaults (see table below). |
+
+**Default SLA thresholds**
+
+| Priority | Turnaround |
+|----------|-----------|
+| STAT | 1 hour |
+| Urgent | 4 hours |
+| Routine | 24 hours |
+| Follow-up | 48 hours |
+
+**Environment variables**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SLA_CRON_SCHEDULE` | `*/5 * * * *` | Cron expression for the SLA check |
+| `SLA_STAT_HOURS` | `1` | SLA threshold (hours) for STAT studies |
+| `SLA_URGENT_HOURS` | `4` | SLA threshold (hours) for urgent studies |
+| `SLA_ROUTINE_HOURS` | `24` | SLA threshold (hours) for routine studies |
+| `SLA_FOLLOW_UP_HOURS` | `48` | SLA threshold (hours) for follow-up studies |
+| `SLA_WARNING_THRESHOLD_PERCENT` | `75` | Elapsed-time % at which a warning is sent |
+
+### Auto-Assignment Engine (`AutoAssignmentService`)
+
+Automatically assigns unassigned (`received`/`queued`) studies to active radiologists.
+
+**Selection algorithm**
+
+1. Fetch all studies with no active assignment, ordered by priority (STAT first) then oldest first.
+2. Load all active radiologists with their current active-assignment count.
+3. For each study: prefer a radiologist whose `specializations` include the study modality; otherwise pick the radiologist with the fewest active assignments (load-balanced).
+4. Create a `StudyAssignment`, update the study status to `assigned`, and notify the radiologist.
+
+**Environment variables**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTO_ASSIGN_CRON_SCHEDULE` | `*/3 * * * *` | Cron expression for the assignment run |
+| `ESCALATION_UNASSIGNED_STAT_MINUTES` | `30` | Escalate if STAT study unassigned longer than this |
+| `ESCALATION_UNASSIGNED_URGENT_MINUTES` | `120` | Escalate if urgent study unassigned longer than this |
+| `ESCALATION_UNASSIGNED_ROUTINE_MINUTES` | `720` | Escalate if routine study unassigned longer than this |
+
+> The engine also exposes a `triggerImmediateAssignment()` method that can be called from the Orthanc webhook handler to assign a newly ingested study without waiting for the next cron tick.
+
 ## Documentation
 
 - [Backend API Documentation](./backend/README.md) – Backend API setup and endpoints
@@ -201,13 +259,15 @@ See [ROADMAP.md](./ROADMAP.md) for the complete development roadmap.
 - **Authentication** – Keycloak JWT validation middleware
 - **Core Endpoints** – Users, Providers, Studies, Reports management
 - **Frontend Integration** – API service layer and OIDC configuration
+- **SLA Monitoring** – Cron job to detect approaching/breached SLA deadlines
+- **Auto-Assignment Engine** – Load-balanced radiologist assignment with escalation
 
 ### In Progress 🔄
 - **Worklist Extension** – Radiologist assignment queue
 - **Reporting Extension** – In-viewer report editor
 
 ### Upcoming
-- **Background Jobs** – SLA monitoring, auto-assignment, notifications
+- **Notification Dispatcher** – Email/WebSocket delivery for notifications
 - **Admin Dashboard** – User and provider management UI
 
 ## Contributing
