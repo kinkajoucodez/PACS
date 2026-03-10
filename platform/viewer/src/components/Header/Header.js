@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { Dropdown, AboutContent, withModal } from '@ohif/ui';
 //
 import { UserPreferences } from './../UserPreferences';
+import UserProfile from '../UserProfile/UserProfile';
 import OHIFLogo from '../OHIFLogo/OHIFLogo.js';
 import './Header.css';
 
@@ -24,6 +25,21 @@ function Header(props) {
 
   const [options, setOptions] = useState([]);
   const hasLink = linkText && linkPath;
+
+  // Callbacks for UserProfile dropdown
+  const handleShowPreferences = useCallback(() => {
+    show({
+      content: UserPreferences,
+      title: t('User Preferences'),
+    });
+  }, [show, t]);
+
+  const handleShowAbout = useCallback(() => {
+    show({
+      content: AboutContent,
+      title: t('OHIF Viewer - About'),
+    });
+  }, [show, t]);
 
   useEffect(() => {
     const optionsValue = [
@@ -93,7 +109,15 @@ function Header(props) {
 
         <div className="header-menu">
           <span className="research-use">{t('INVESTIGATIONAL USE ONLY')}</span>
-          <Dropdown title={t('Options')} list={options} align="right" />
+          {user && userManager ? (
+            <UserProfile
+              userManager={userManager}
+              onShowPreferences={handleShowPreferences}
+              onShowAbout={handleShowAbout}
+            />
+          ) : (
+            <Dropdown title={t('Options')} list={options} align="right" />
+          )}
         </div>
       </div>
     </>
