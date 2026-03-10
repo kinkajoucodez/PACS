@@ -76,12 +76,12 @@ Extend the OHIF Viewer with platform-specific features.
 - [ ] Add role-based route guards
 - [ ] Display user profile in header
 
-### 2.2 Worklist Extension
-- [ ] Create custom OHIF extension for worklist
-- [ ] Show studies assigned to current radiologist
-- [ ] Display SLA countdown timers
-- [ ] Add STAT indicators and sorting
-- [ ] Filter by modality, priority, status
+### 2.2 Worklist Extension ✅
+- [x] Create custom OHIF extension for worklist
+- [x] Show studies assigned to current radiologist
+- [x] Display SLA countdown timers
+- [x] Add STAT indicators and sorting
+- [x] Filter by modality, priority, status
 
 ### 2.3 Reporting Extension
 - [ ] In-viewer report editor panel
