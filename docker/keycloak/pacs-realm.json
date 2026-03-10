@@ -1,0 +1,91 @@
+{
+  "realm": "pacs-platform",
+  "enabled": true,
+  "displayName": "PACS Platform",
+  "displayNameHtml": "<strong>PACS Platform</strong>",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "Platform administrator" },
+      { "name": "radiologist", "description": "Radiologist who reads and reports studies" },
+      { "name": "provider", "description": "Healthcare provider / facility manager" },
+      { "name": "billing_officer", "description": "Manages billing and invoicing" },
+      { "name": "support", "description": "Support staff" },
+      { "name": "auditor", "description": "Audit and compliance staff" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "ohif-viewer",
+      "name": "OHIF Viewer",
+      "description": "Public client for the OHIF imaging frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost/*",
+        "http://localhost:3000/*",
+        "http://localhost:80/*"
+      ],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "pacs-backend",
+      "name": "PACS Backend",
+      "description": "Confidential client for backend microservices",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "pacs-backend-secret",
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@pacs-platform.local",
+      "firstName": "Platform",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    },
+    {
+      "username": "radiologist",
+      "email": "radiologist@pacs-platform.local",
+      "firstName": "Test",
+      "lastName": "Radiologist",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "rad123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["radiologist"]
+    }
+  ]
+}
