@@ -16,6 +16,7 @@ This platform provides a complete teleradiology solution that enables healthcare
 - **Billing & Invoicing** – Per-study billing with monthly invoice generation
 - **Quality Assurance** – Dispute resolution and radiologist rating system
 - **Audit Logging** – HIPAA-compliant activity tracking
+- **Backend API** – NestJS REST API with Swagger documentation
 
 ## Architecture
 
@@ -29,7 +30,7 @@ This platform provides a complete teleradiology solution that enables healthcare
                         │  /          → OHIF Viewer :3000   │
                         │  /orthanc/  → Orthanc     :8042   │
                         │  /auth/     → Keycloak    :8080   │
-                        │  /api/      → Backend API         │
+                        │  /api/      → Backend API :3001   │
                         └─────┬────────┬────────┬──────────┘
                               │        │        │
               ┌───────────────▼─┐   ┌──▼───┐  ┌▼──────────┐
@@ -51,6 +52,7 @@ This platform provides a complete teleradiology solution that enables healthcare
 | **OHIF Viewer** | React-based DICOM viewer for medical imaging |
 | **Orthanc** | DICOM server with DICOMweb API |
 | **Keycloak** | Identity and access management |
+| **Backend API** | NestJS REST API for platform business logic |
 | **PostgreSQL** | Relational database for all platform data |
 | **Nginx** | Reverse proxy and SSL termination |
 
@@ -88,6 +90,8 @@ open http://localhost
 | OHIF Viewer | http://localhost | Medical imaging viewer |
 | Orthanc | http://localhost/orthanc/ | DICOM server UI |
 | Keycloak | http://localhost/auth/ | Identity management |
+| Backend API | http://localhost/api/ | Platform REST API |
+| API Documentation | http://localhost/api/docs | Swagger UI |
 
 ### Default Credentials
 
@@ -102,6 +106,15 @@ open http://localhost
 ## Project Structure
 
 ```
+├── backend/                 # Backend API (NestJS)
+│   ├── src/                # Source code
+│   │   ├── auth/          # JWT authentication with Keycloak
+│   │   ├── users/         # User management
+│   │   ├── providers/     # Healthcare provider management
+│   │   ├── studies/       # DICOM study management
+│   │   └── reports/       # Radiology report management
+│   ├── prisma/            # Database schema and migrations
+│   └── Dockerfile         # Docker build for backend
 ├── docker/                  # Docker configuration files
 │   ├── keycloak/           # Keycloak realm and config
 │   ├── nginx/              # Nginx reverse proxy config
@@ -113,14 +126,57 @@ open http://localhost
 │   ├── i18n/              # Internationalization
 │   ├── ui/                # UI components
 │   └── viewer/            # Main viewer application
+│       └── src/services/  # API service layer
 ├── extensions/            # OHIF extensions
 ├── docker-compose.yml     # Main compose file
 ├── ROADMAP.md            # Development roadmap
 └── README.md             # This file
 ```
 
+## Backend API
+
+The platform includes a NestJS-based REST API with the following endpoints:
+
+### Health
+- `GET /api/health` - API health status
+- `GET /api/health/ready` - Readiness check
+
+### Users
+- `GET /api/users` - List users (admin/support only)
+- `GET /api/users/me` - Current user profile
+- `GET /api/users/radiologists` - List active radiologists
+- `POST /api/users` - Create user (admin only)
+- `PATCH /api/users/:id` - Update user
+- `PATCH /api/users/:id/status` - Update user status
+
+### Providers
+- `GET /api/providers` - List healthcare providers
+- `GET /api/providers/:id` - Get provider details
+- `GET /api/providers/:id/studies` - Get provider's studies
+- `POST /api/providers` - Create provider (admin only)
+- `PATCH /api/providers/:id` - Update provider
+
+### Studies
+- `GET /api/studies` - List studies with filtering
+- `GET /api/studies/worklist` - Get radiologist's worklist
+- `GET /api/studies/:id` - Get study details
+- `POST /api/studies/:id/assign` - Assign study to radiologist
+- `POST /api/studies/:id/release` - Release assignment
+- `POST /api/studies/:id/flag-stat` - Flag as STAT priority
+
+### Reports
+- `GET /api/reports` - List reports
+- `GET /api/reports/my-reports` - Get radiologist's reports
+- `POST /api/reports` - Create new report
+- `PATCH /api/reports/:id` - Update draft report
+- `POST /api/reports/:id/finalize` - Finalize report
+- `POST /api/reports/:id/addendum` - Create addendum
+
+For full API documentation, visit `http://localhost/api/docs` after starting the services.
+
 ## Documentation
 
+- [Backend API Documentation](./backend/README.md) – Backend API setup and endpoints
 - [Docker Setup Guide](./docker/README.md) – Detailed Docker configuration and usage
 - [Development Roadmap](./ROADMAP.md) – Planned features and next steps
 - [Contributing Guide](./CONTRIBUTING.md) – How to contribute
@@ -138,12 +194,21 @@ open http://localhost
 
 ## Roadmap
 
-See [ROADMAP.md](./ROADMAP.md) for the complete development roadmap. High-priority next steps:
+See [ROADMAP.md](./ROADMAP.md) for the complete development roadmap.
 
-1. **Backend API** – REST API for platform business logic
-2. **Authentication Integration** – Keycloak OIDC in OHIF viewer
-3. **Worklist Extension** – Radiologist assignment queue
-4. **Reporting Extension** – In-viewer report editor
+### Completed ✅
+- **Backend API** – NestJS REST API with Swagger documentation
+- **Authentication** – Keycloak JWT validation middleware
+- **Core Endpoints** – Users, Providers, Studies, Reports management
+- **Frontend Integration** – API service layer and OIDC configuration
+
+### In Progress 🔄
+- **Worklist Extension** – Radiologist assignment queue
+- **Reporting Extension** – In-viewer report editor
+
+### Upcoming
+- **Background Jobs** – SLA monitoring, auto-assignment, notifications
+- **Admin Dashboard** – User and provider management UI
 
 ## Contributing
 

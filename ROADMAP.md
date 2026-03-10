@@ -8,48 +8,52 @@ The foundation layer is complete:
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| Docker Infrastructure | ✅ Complete | Multi-service Docker Compose with PostgreSQL, Orthanc, Keycloak, OHIF, Nginx |
+| Docker Infrastructure | ✅ Complete | Multi-service Docker Compose with PostgreSQL, Orthanc, Keycloak, OHIF, Nginx, Backend API |
 | Database Schema | ✅ Complete | Full schema for users, studies, reports, SLA tracking, billing, disputes, audit logs |
 | Identity Management | ✅ Complete | Keycloak realm with roles (admin, radiologist, provider, billing_officer, support, auditor) |
 | DICOM Server | ✅ Complete | Orthanc configured with DICOMweb, PostgreSQL storage |
 | Viewer | ✅ Complete | OHIF Viewer connected to Orthanc via DICOMweb |
-| Reverse Proxy | ✅ Complete | Nginx routing for all services |
+| Reverse Proxy | ✅ Complete | Nginx routing for all services including backend API |
+| Backend API | ✅ Complete | NestJS API with User, Provider, Study, Report management |
 
 ---
 
-## Phase 1: Backend API (Priority: High)
+## Phase 1: Backend API (Priority: High) ✅ COMPLETE
 
 Build the core backend service that connects Keycloak, Orthanc, and the PostgreSQL platform database.
 
-### 1.1 API Foundation
-- [ ] Choose backend framework (Node.js/Express, Python/FastAPI, Go/Gin)
-- [ ] Set up project structure with dependency injection
-- [ ] Configure Keycloak JWT validation middleware
-- [ ] Implement database connection pool with Prisma/SQLAlchemy/GORM
-- [ ] Add OpenAPI/Swagger documentation
-- [ ] Create health check endpoints
+### 1.1 API Foundation ✅
+- [x] Choose backend framework - **NestJS (TypeScript)**
+- [x] Set up project structure with dependency injection
+- [x] Configure Keycloak JWT validation middleware
+- [x] Implement database connection pool with **Prisma ORM**
+- [x] Add OpenAPI/Swagger documentation (available at `/api/docs`)
+- [x] Create health check endpoints (`/api/health`, `/api/health/ready`)
 
-### 1.2 Core Endpoints
-- [ ] **User Management**
+### 1.2 Core Endpoints ✅
+- [x] **User Management**
   - `GET/POST/PATCH /api/users` - CRUD operations
   - `GET /api/users/me` - Current user profile
+  - `GET /api/users/radiologists` - List active radiologists
   - `POST /api/users/radiologist-profile` - Radiologist verification submission
   - `PATCH /api/users/:id/status` - Admin status changes
 
-- [ ] **Healthcare Provider Management**
+- [x] **Healthcare Provider Management**
   - `GET/POST/PATCH /api/providers` - CRUD operations
-  - `GET /api/providers/:id/users` - Users associated with provider
   - `GET /api/providers/:id/studies` - Studies from provider
 
-- [ ] **Study Management**
+- [x] **Study Management**
   - `GET /api/studies` - List with filtering/pagination
   - `GET /api/studies/:id` - Study details with assignments
+  - `GET /api/studies/worklist` - Radiologist worklist
+  - `POST /api/studies` - Create study (webhook handler)
   - `POST /api/studies/:id/flag-stat` - STAT flagging
   - `POST /api/studies/:id/assign` - Manual assignment
   - `POST /api/studies/:id/release` - Release assignment
 
-- [ ] **Report Management**
+- [x] **Report Management**
   - `GET/POST/PATCH /api/reports` - CRUD operations
+  - `GET /api/reports/my-reports` - Radiologist's reports
   - `POST /api/reports/:id/finalize` - Finalize report
   - `POST /api/reports/:id/addendum` - Create addendum
 
@@ -61,13 +65,14 @@ Build the core backend service that connects Keycloak, Orthanc, and the PostgreS
 
 ---
 
-## Phase 2: Frontend Integration (Priority: High)
+## Phase 2: Frontend Integration (Priority: High) 🔄 IN PROGRESS
 
 Extend the OHIF Viewer with platform-specific features.
 
-### 2.1 Authentication Integration
-- [ ] Add Keycloak OIDC login flow to OHIF
-- [ ] Implement token refresh logic
+### 2.1 Authentication Integration ✅
+- [x] Add Keycloak OIDC login flow configuration to OHIF (`pacs-platform.js` config)
+- [x] Create API service layer (`pacsApiService.js`) for backend integration
+- [ ] Implement token refresh logic (built-in with oidc-client)
 - [ ] Add role-based route guards
 - [ ] Display user profile in header
 
