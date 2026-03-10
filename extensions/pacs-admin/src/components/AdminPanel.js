@@ -219,10 +219,10 @@ function UsersSection({ api }) {
     }
   };
 
-  const handleStatusToggle = async (user) => {
-    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+  const handleStatusToggle = async (targetUser) => {
+    const newStatus = targetUser.status === 'active' ? 'inactive' : 'active';
     try {
-      await api.updateUserStatus(user.id, newStatus);
+      await api.updateUserStatus(targetUser.id, newStatus);
       fetchUsers();
     } catch (err) {
       setError(err.message);
