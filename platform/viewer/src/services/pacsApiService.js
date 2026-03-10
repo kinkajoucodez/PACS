@@ -227,6 +227,29 @@ class PacsApiService {
       body: JSON.stringify(addendumData),
     });
   }
+
+  // ==================== Notifications ====================
+
+  async getNotifications(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/notifications${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getUnreadNotificationCount() {
+    return this.request('/notifications/unread-count');
+  }
+
+  async markNotificationRead(id) {
+    return this.request(`/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
+  }
+
+  async markAllNotificationsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'PATCH',
+    });
+  }
 }
 
 // Export singleton instance

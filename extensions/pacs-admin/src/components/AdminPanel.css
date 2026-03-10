@@ -1,0 +1,432 @@
+/* AdminPanel.css — PACS Admin Dashboard styles */
+
+.admin-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 500px;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, sans-serif;
+  font-size: 14px;
+}
+
+.admin-panel.admin-loading,
+.admin-panel.admin-unauthorized {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  min-height: 300px;
+  color: #888;
+}
+
+.admin-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #333;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 16px;
+  background-color: #111;
+  border-bottom: 2px solid #333;
+  flex-shrink: 0;
+}
+
+.admin-tab {
+  padding: 10px 18px;
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+
+.admin-tab:hover {
+  color: #ddd;
+}
+
+.admin-tab.active {
+  color: #fff;
+  border-bottom-color: #2d5aa7;
+}
+
+/* Content area */
+.admin-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.admin-section {
+  max-width: 1200px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+/* Buttons */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.2s, opacity 0.2s;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: #2d5aa7;
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: #1e4080;
+}
+
+.btn-secondary {
+  background-color: #333;
+  color: #ddd;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: #444;
+}
+
+.btn-danger {
+  background-color: #8b1a1a;
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) {
+  background-color: #a62020;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.link-btn {
+  background: transparent;
+  border: none;
+  color: #6c9bd1;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+/* Badges */
+.admin-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-ok {
+  background-color: rgba(40, 167, 69, 0.2);
+  color: #56d472;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.badge-error {
+  background-color: rgba(220, 53, 69, 0.2);
+  color: #f07878;
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+.admin-tag {
+  display: inline-block;
+  padding: 1px 6px;
+  background-color: #2a3f6b;
+  color: #6c9bd1;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+/* Tables */
+.admin-table-wrap {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #333;
+  margin-top: 16px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table th {
+  background-color: #222;
+  color: #aaa;
+  font-weight: 600;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 9px 14px;
+  border-bottom: 1px solid #2a2a2a;
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover td {
+  background-color: #222;
+}
+
+.action-cell {
+  display: flex;
+  gap: 6px;
+}
+
+/* Forms */
+.admin-form {
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+  max-width: 500px;
+}
+
+.admin-form h4 {
+  margin: 0 0 16px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.form-row label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #e0e0e0;
+  font-size: 13px;
+  padding: 8px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  border-color: #2d5aa7;
+}
+
+.form-row select option {
+  background-color: #2a2a2a;
+}
+
+/* Wizard */
+.wizard {
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 20px;
+  margin-bottom: 24px;
+  max-width: 560px;
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.wizard-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #666;
+  font-size: 13px;
+}
+
+.wizard-step.active {
+  color: #2d5aa7;
+  font-weight: 600;
+}
+
+.wizard-step.done {
+  color: #56d472;
+}
+
+.step-num {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.wizard-body {
+  padding-top: 8px;
+}
+
+.wizard-nav {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.review-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin: 0 0 16px;
+}
+
+.review-list dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.review-list dd {
+  margin: 0;
+  color: #e0e0e0;
+}
+
+/* Health */
+.admin-health {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.health-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.health-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 6px;
+  padding: 12px 16px;
+  min-width: 140px;
+}
+
+.health-detail {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Misc */
+.admin-loading {
+  color: #888;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+.admin-error {
+  color: #f07878;
+  background-color: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.admin-success {
+  color: #56d472;
+  background-color: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.admin-hint {
+  color: #888;
+  font-size: 13px;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.admin-empty {
+  color: #666;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.admin-divider {
+  border: none;
+  border-top: 1px solid #333;
+  margin: 24px 0;
+}

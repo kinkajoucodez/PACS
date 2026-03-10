@@ -57,24 +57,24 @@ Build the core backend service that connects Keycloak, Orthanc, and the PostgreS
   - `POST /api/reports/:id/finalize` - Finalize report
   - `POST /api/reports/:id/addendum` - Create addendum
 
-### 1.3 Background Jobs
+### 1.3 Background Jobs ✅
 - [x] **Orthanc Webhook Handler** - Sync new studies from Orthanc to platform database
 - [x] **SLA Monitor** - Check SLA deadlines, send warnings, mark breaches
 - [x] **Auto-Assignment Engine** - Round-robin or load-balanced radiologist assignment
-- [ ] **Notification Dispatcher** - Send notifications via email/WebSocket
+- [x] **Notification Dispatcher** - Email (nodemailer/SMTP) + WebSocket (Socket.IO) delivery; `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `PATCH /api/notifications/read-all`
 
 ---
 
-## Phase 2: Frontend Integration (Priority: High) 🔄 IN PROGRESS
+## Phase 2: Frontend Integration (Priority: High) ✅ COMPLETE
 
 Extend the OHIF Viewer with platform-specific features.
 
 ### 2.1 Authentication Integration ✅
 - [x] Add Keycloak OIDC login flow configuration to OHIF (`pacs-platform.js` config)
 - [x] Create API service layer (`pacsApiService.js`) for backend integration
-- [ ] Implement token refresh logic (built-in with oidc-client)
-- [ ] Add role-based route guards
-- [ ] Display user profile in header
+- [x] Implement token refresh logic (`TokenRefreshNotification`, `automaticSilentRenew: true`)
+- [x] Add role-based route guards (`ProtectedRoute` component, `useHasRole` hook)
+- [x] Display user profile in header (`UserProfile` component in Header)
 
 ### 2.2 Worklist Extension ✅
 - [x] Create custom OHIF extension for worklist
@@ -83,20 +83,20 @@ Extend the OHIF Viewer with platform-specific features.
 - [x] Add STAT indicators and sorting
 - [x] Filter by modality, priority, status
 
-### 2.3 Reporting Extension
-- [ ] In-viewer report editor panel
-- [ ] Template selection and insertion
-- [ ] Voice dictation integration (Web Speech API)
-- [ ] Draft auto-save
-- [ ] Finalize and sign workflow
-- [ ] Previous reports viewer
+### 2.3 Reporting Extension ✅
+- [x] In-viewer report editor panel (`extensions/reporting/`)
+- [x] Template selection and insertion (modality-specific templates)
+- [x] Voice dictation integration (Web Speech API)
+- [x] Draft auto-save
+- [x] Finalize and sign workflow
+- [x] Previous reports viewer
 
-### 2.4 Admin Dashboard
-- [ ] User management UI
-- [ ] Provider onboarding wizard
-- [ ] Radiologist verification workflow
-- [ ] SLA configuration editor
-- [ ] System health dashboard
+### 2.4 Admin Dashboard ✅
+- [x] User management UI (list, create, activate/deactivate)
+- [x] Provider onboarding wizard (step-by-step, `POST /api/providers`)
+- [x] Radiologist verification workflow (approve/reject pending verifications)
+- [x] SLA configuration editor (threshold form)
+- [x] System health dashboard (`GET /api/health/ready`)
 
 ---
 
