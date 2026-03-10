@@ -49,6 +49,9 @@ import { GenericViewerCommands, MeasurementsPanel } from './appExtensions';
 /** Viewer */
 import OHIFStandaloneViewer from './OHIFStandaloneViewer';
 
+/** Components */
+import TokenRefreshNotification from './components/TokenRefreshNotification';
+
 /** Store */
 import { getActiveContexts } from './store/layout/selectors.js';
 import store from './store';
@@ -187,6 +190,7 @@ class App extends Component {
                                 modal={OHIFModal}
                                 service={UIModalService}
                               >
+                                <TokenRefreshNotification userManager={this._userManager} />
                                 <OHIFStandaloneViewer
                                   userManager={this._userManager}
                                 />
