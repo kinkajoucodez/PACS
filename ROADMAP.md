@@ -58,7 +58,7 @@ Build the core backend service that connects Keycloak, Orthanc, and the PostgreS
   - `POST /api/reports/:id/addendum` - Create addendum
 
 ### 1.3 Background Jobs
-- [ ] **Orthanc Webhook Handler** - Sync new studies from Orthanc to platform database
+- [x] **Orthanc Webhook Handler** - Sync new studies from Orthanc to platform database
 - [ ] **SLA Monitor** - Check SLA deadlines, send warnings, mark breaches
 - [ ] **Auto-Assignment Engine** - Round-robin or load-balanced radiologist assignment
 - [ ] **Notification Dispatcher** - Send notifications via email/WebSocket

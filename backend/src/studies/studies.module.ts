@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
 import { StudiesController } from './studies.controller';
+import { StudiesWebhookController } from './studies-webhook.controller';
 import { StudiesService } from './studies.service';
+import { OrthancModule } from '../orthanc';
 
 @Module({
-  controllers: [StudiesController],
+  imports: [OrthancModule],
+  controllers: [StudiesController, StudiesWebhookController],
   providers: [StudiesService],
   exports: [StudiesService],
 })

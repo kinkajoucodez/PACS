@@ -192,3 +192,15 @@ export class StudyResponseDto {
   @ApiProperty()
   updatedAt: Date;
 }
+
+/**
+ * Payload sent by Orthanc's OnStableStudy Lua callback to the webhook endpoint.
+ */
+export class OrthancWebhookDto {
+  @ApiProperty({
+    example: 'f7dcc45e-3a6b2c1d-...',
+    description: 'Orthanc internal study UUID',
+  })
+  @IsString()
+  orthancStudyId: string;
+}

@@ -9,6 +9,10 @@
     "/usr/share/orthanc/plugins",
     "/usr/local/share/orthanc/plugins"
   ],
+
+  "LuaScripts": [
+    "/etc/orthanc/webhook.lua"
+  ],
   "ConcurrentJobs": 2,
 
   "HttpServerEnabled": true,

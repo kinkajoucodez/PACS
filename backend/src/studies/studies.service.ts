@@ -2,7 +2,9 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   StudyFilterDto,
@@ -10,13 +12,20 @@ import {
   ReleaseAssignmentDto,
   FlagStatDto,
   CreateStudyDto,
+  OrthancWebhookDto,
 } from './dto';
 import { PaginationDto, PaginatedResponseDto } from '../common/dto';
 import { StudyPriority, StudyStatus, AssignmentStatus } from '@prisma/client';
+import { OrthancService } from '../orthanc';
 
 @Injectable()
 export class StudiesService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(StudiesService.name);
+
+  constructor(
+    private prisma: PrismaService,
+    private orthancService: OrthancService,
+  ) {}
 
   async findAll(
     paginationDto: PaginationDto,
@@ -211,6 +220,166 @@ export class StudiesService {
         provider: true,
       },
     });
+  }
+
+  /**
+   * Handles an Orthanc OnStableStudy webhook notification.
+   *
+   * 1. Queries Orthanc for full DICOM study metadata.
+   * 2. Checks for an existing record by studyInstanceUid (duplicate guard).
+   * 3. Creates a Study record in the platform database.
+   * 4. Creates an SlaTracking record if a matching SLA configuration exists.
+   *
+   * @returns `{ status: 'created', study }` or `{ status: 'already_exists', study }`.
+   */
+  async handleOrthancWebhook(dto: OrthancWebhookDto): Promise<{
+    status: 'created' | 'already_exists';
+    study: Record<string, unknown>;
+  }> {
+    const { orthancStudyId } = dto;
+
+    // Fetch metadata from Orthanc (may throw ServiceUnavailableException)
+    const { study: orthancStudy, firstSeries } =
+      await this.orthancService.getStudyWithSeries(orthancStudyId);
+
+    const studyInstanceUid = orthancStudy.MainDicomTags.StudyInstanceUID;
+
+    // Duplicate guard
+    const existing = await this.prisma.study.findUnique({
+      where: { studyInstanceUid },
+    });
+    if (existing) {
+      this.logger.log(
+        `Study ${studyInstanceUid} already exists (orthancStudyId=${orthancStudyId}), skipping.`,
+      );
+      return {
+        status: 'already_exists',
+        study: existing as unknown as Record<string, unknown>,
+      };
+    }
+
+    // Extract and normalise metadata
+    const patientId = orthancStudy.PatientMainDicomTags?.PatientID ?? undefined;
+    const rawPatientName =
+      orthancStudy.PatientMainDicomTags?.PatientName ?? undefined;
+    // Normalise DICOM patient name (trim + collapse whitespace + uppercase)
+    // before hashing so that minor formatting differences don't produce
+    // different hashes for the same patient.
+    const normalizedPatientName = rawPatientName
+      ? rawPatientName.trim().toUpperCase().replace(/\s+/g, ' ')
+      : undefined;
+    const patientNameHash = normalizedPatientName
+      ? createHash('sha256').update(normalizedPatientName).digest('hex')
+      : undefined;
+
+    const modality = firstSeries?.MainDicomTags?.Modality ?? undefined;
+    const bodyPart = firstSeries?.MainDicomTags?.BodyPartExamined ?? undefined;
+
+    const studyDate = orthancStudy.MainDicomTags.StudyDate
+      ? this.parseOrthancDate(orthancStudy.MainDicomTags.StudyDate)
+      : undefined;
+
+    const studyDescription =
+      orthancStudy.MainDicomTags.StudyDescription ?? undefined;
+    const referringPhysician =
+      orthancStudy.MainDicomTags.ReferringPhysicianName ?? undefined;
+
+    // Persist study
+    const study = await this.prisma.study.create({
+      data: {
+        orthancStudyId,
+        studyInstanceUid,
+        patientId,
+        patientNameHash,
+        modality,
+        studyDescription,
+        studyDate,
+        referringPhysician,
+        bodyPart,
+        priority: 'routine',
+        status: 'received',
+      },
+      include: { provider: true },
+    });
+
+    this.logger.log(
+      `Study created: id=${study.id} studyInstanceUid=${studyInstanceUid}`,
+    );
+
+    // Attempt SLA tracking creation (best-effort)
+    await this.createSlaTracking(
+      study.id,
+      study.providerId,
+      modality ?? null,
+      study.priority,
+    );
+
+    return {
+      status: 'created',
+      study: study as unknown as Record<string, unknown>,
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Parses an Orthanc DICOM date string (YYYYMMDD) into a JS Date.
+   */
+  private parseOrthancDate(dicomDate: string): Date | undefined {
+    if (!dicomDate || dicomDate.length !== 8) return undefined;
+    const year = parseInt(dicomDate.substring(0, 4), 10);
+    const month = parseInt(dicomDate.substring(4, 6), 10) - 1;
+    const day = parseInt(dicomDate.substring(6, 8), 10);
+    const date = new Date(year, month, day);
+    return isNaN(date.getTime()) ? undefined : date;
+  }
+
+  /**
+   * Creates an SlaTracking record if a matching SLA configuration exists for
+   * the study's provider, modality, and priority.
+   * Prefers an exact modality match over a wildcard (null modality) config.
+   */
+  private async createSlaTracking(
+    studyId: string,
+    providerId: string | null,
+    modality: string | null,
+    priority: StudyPriority,
+  ): Promise<void> {
+    if (!providerId) return;
+
+    const slaConfig = await this.prisma.slaConfiguration.findFirst({
+      where: {
+        providerId,
+        priority,
+        isActive: true,
+        OR: [{ modality }, { modality: null }],
+      },
+      orderBy: { modality: 'desc' }, // prefer specific modality match
+    });
+
+    if (!slaConfig) return;
+
+    const targetMs = Number(slaConfig.targetHours) * 60 * 60 * 1000;
+    const deadlineAt = new Date(Date.now() + targetMs);
+
+    try {
+      await this.prisma.slaTracking.create({
+        data: {
+          studyId,
+          slaConfigId: slaConfig.id,
+          deadlineAt,
+          status: 'on_track',
+        },
+      });
+      this.logger.log(`SlaTracking created for study ${studyId}`);
+    } catch (err) {
+      // SlaTracking is best-effort; log but do not fail the request
+      this.logger.warn(
+        `Could not create SlaTracking for study ${studyId}: ${(err as Error).message}`,
+      );
+    }
   }
 
   async assignStudy(
