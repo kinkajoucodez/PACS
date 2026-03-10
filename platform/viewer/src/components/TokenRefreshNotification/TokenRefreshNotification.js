@@ -1,6 +1,6 @@
 /**
  * TokenRefreshNotification Component
- * 
+ *
  * Shows toast notifications for:
  * - Token refresh success
  * - Token expiration warning
@@ -25,15 +25,18 @@ const TokenRefreshNotification = ({ t, userManager }) => {
   /**
    * Add a notification to the queue
    */
-  const addNotification = useCallback((type, message, duration = NOTIFICATION_DURATION) => {
-    const id = Date.now();
-    setNotifications(prev => [...prev, { id, type, message }]);
+  const addNotification = useCallback(
+    (type, message, duration = NOTIFICATION_DURATION) => {
+      const id = Date.now();
+      setNotifications(prev => [...prev, { id, type, message }]);
 
-    // Auto-remove after duration
-    setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== id));
-    }, duration);
-  }, []);
+      // Auto-remove after duration
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+      }, duration);
+    },
+    []
+  );
 
   /**
    * Listen for token refresh events from OIDC
@@ -41,32 +44,44 @@ const TokenRefreshNotification = ({ t, userManager }) => {
   useEffect(() => {
     if (!userManager) return;
 
-    const handleTokenRefreshed = (refreshedUser) => {
+    const handleTokenRefreshed = refreshedUser => {
       const now = Date.now();
-      
+
       // Only show notification if this is a background refresh
       // (not the initial load or manual login)
-      if (lastRefreshTime && (now - lastRefreshTime) > 30000) {
+      if (lastRefreshTime && now - lastRefreshTime > 30000) {
         addNotification('success', t('Session refreshed successfully'));
       }
       setLastRefreshTime(now);
       setHasShownExpiringWarning(false);
     };
 
-    const handleSilentRenewError = (error) => {
+    const handleSilentRenewError = error => {
+      // eslint-disable-next-line no-console
       console.error('Silent renew error:', error);
-      addNotification('warning', t('Session could not be refreshed. You may need to log in again.'), 10000);
+      addNotification(
+        'warning',
+        t('Session could not be refreshed. You may need to log in again.'),
+        10000
+      );
     };
 
     const handleAccessTokenExpiring = () => {
       if (!hasShownExpiringWarning) {
-        addNotification('info', t('Your session will expire soon. Refreshing...'));
+        addNotification(
+          'info',
+          t('Your session will expire soon. Refreshing...')
+        );
         setHasShownExpiringWarning(true);
       }
     };
 
     const handleAccessTokenExpired = () => {
-      addNotification('error', t('Your session has expired. Please log in again.'), 10000);
+      addNotification(
+        'error',
+        t('Your session has expired. Please log in again.'),
+        10000
+      );
     };
 
     // Add event listeners
@@ -82,7 +97,13 @@ const TokenRefreshNotification = ({ t, userManager }) => {
       userManager.events.removeAccessTokenExpiring(handleAccessTokenExpiring);
       userManager.events.removeAccessTokenExpired(handleAccessTokenExpired);
     };
-  }, [userManager, lastRefreshTime, hasShownExpiringWarning, addNotification, t]);
+  }, [
+    userManager,
+    lastRefreshTime,
+    hasShownExpiringWarning,
+    addNotification,
+    t,
+  ]);
 
   /**
    * Check for expiring token on mount and periodically
@@ -92,13 +113,17 @@ const TokenRefreshNotification = ({ t, userManager }) => {
 
     const checkExpiration = () => {
       if (!user.expires_at) return;
-      
+
       const expiresAt = user.expires_at * 1000; // Convert to milliseconds
       const now = Date.now();
       const timeUntilExpiry = (expiresAt - now) / 1000; // Seconds
 
       // Warn if expiring within threshold
-      if (timeUntilExpiry > 0 && timeUntilExpiry <= EXPIRING_SOON_THRESHOLD && !hasShownExpiringWarning) {
+      if (
+        timeUntilExpiry > 0 &&
+        timeUntilExpiry <= EXPIRING_SOON_THRESHOLD &&
+        !hasShownExpiringWarning
+      ) {
         const minutes = Math.ceil(timeUntilExpiry / 60);
         addNotification(
           'warning',
@@ -119,7 +144,7 @@ const TokenRefreshNotification = ({ t, userManager }) => {
   /**
    * Remove a notification manually
    */
-  const removeNotification = (id) => {
+  const removeNotification = id => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
@@ -141,7 +166,9 @@ const TokenRefreshNotification = ({ t, userManager }) => {
             {notification.type === 'warning' && '⚠'}
             {notification.type === 'info' && 'ℹ'}
           </span>
-          <span className="token-notification-message">{notification.message}</span>
+          <span className="token-notification-message">
+            {notification.message}
+          </span>
           <button
             className="token-notification-close"
             onClick={() => removeNotification(notification.id)}

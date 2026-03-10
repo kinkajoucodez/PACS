@@ -3,7 +3,7 @@ import toolbarModule from './toolbarModule';
 
 /**
  * Reporting Extension
- * 
+ *
  * Provides a radiology report editor panel for creating and managing reports.
  * Features:
  * - In-viewer report editor with rich text support

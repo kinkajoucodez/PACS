@@ -190,7 +190,9 @@ class App extends Component {
                                 modal={OHIFModal}
                                 service={UIModalService}
                               >
-                                <TokenRefreshNotification userManager={this._userManager} />
+                                <TokenRefreshNotification
+                                  userManager={this._userManager}
+                                />
                                 <OHIFStandaloneViewer
                                   userManager={this._userManager}
                                 />

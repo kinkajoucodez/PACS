@@ -1,6 +1,6 @@
 /**
  * useUser Hook
- * 
+ *
  * Provides easy access to the current user's data from Keycloak OIDC.
  * Extracts user profile information, roles, and authentication status.
  */
@@ -13,7 +13,7 @@ import { useMemo } from 'react';
  * @param {string} token - JWT access token
  * @returns {Object} Decoded token payload
  */
-const parseJwt = (token) => {
+const parseJwt = token => {
   if (!token) return null;
   try {
     const base64Url = token.split('.')[1];
@@ -26,6 +26,7 @@ const parseJwt = (token) => {
     );
     return JSON.parse(jsonPayload);
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error('Failed to parse JWT token:', e);
     return null;
   }
@@ -36,26 +37,26 @@ const parseJwt = (token) => {
  * @param {Object} decodedToken - Decoded JWT token
  * @returns {string[]} Array of user roles
  */
-const extractRoles = (decodedToken) => {
+const extractRoles = decodedToken => {
   if (!decodedToken) return [];
-  
+
   const roles = [];
-  
+
   // Realm roles
   if (decodedToken.realm_access?.roles) {
     roles.push(...decodedToken.realm_access.roles);
   }
-  
+
   // Resource roles (for 'pacs-viewer' client)
   if (decodedToken.resource_access?.['pacs-viewer']?.roles) {
     roles.push(...decodedToken.resource_access['pacs-viewer'].roles);
   }
-  
+
   // Also check for 'pacs-backend' client roles
   if (decodedToken.resource_access?.['pacs-backend']?.roles) {
     roles.push(...decodedToken.resource_access['pacs-backend'].roles);
   }
-  
+
   return [...new Set(roles)]; // Remove duplicates
 };
 
@@ -104,7 +105,9 @@ const useUser = () => {
         email: profile.email,
         firstName: profile.given_name,
         lastName: profile.family_name,
-        fullName: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim(),
+        fullName:
+          profile.name ||
+          `${profile.given_name || ''} ${profile.family_name || ''}`.trim(),
       },
       roles,
       accessToken,
@@ -126,13 +129,13 @@ const useUser = () => {
  * @param {string[]} requiredRoles - Array of role names
  * @returns {boolean} True if user has at least one of the required roles
  */
-export const useHasRole = (requiredRoles) => {
+export const useHasRole = requiredRoles => {
   const { roles } = useUser();
-  
+
   if (!requiredRoles || requiredRoles.length === 0) {
     return true;
   }
-  
+
   return requiredRoles.some(role => roles.includes(role));
 };
 
@@ -141,13 +144,13 @@ export const useHasRole = (requiredRoles) => {
  * @param {string[]} requiredRoles - Array of role names
  * @returns {boolean} True if user has all of the required roles
  */
-export const useHasAllRoles = (requiredRoles) => {
+export const useHasAllRoles = requiredRoles => {
   const { roles } = useUser();
-  
+
   if (!requiredRoles || requiredRoles.length === 0) {
     return true;
   }
-  
+
   return requiredRoles.every(role => roles.includes(role));
 };
 

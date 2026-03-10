@@ -1,6 +1,6 @@
 /**
  * ProtectedRoute Component
- * 
+ *
  * A route wrapper that enforces role-based access control.
  * Redirects unauthorized users to an appropriate page.
  */
@@ -27,7 +27,7 @@ const ProtectedRoute = ({
   return (
     <Route
       {...rest}
-      render={(props) => {
+      render={props => {
         // Not authenticated - let the main app handle redirect to login
         if (!isAuthenticated || isExpired) {
           return null;
@@ -81,14 +81,17 @@ const UnauthorizedPage = ({ requiredRoles }) => {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <div style={styles.icon}>🔒</div>
+        <span style={styles.icon} role="img" aria-label="locked">
+          🔒
+        </span>
         <h1 style={styles.title}>Access Denied</h1>
         <p style={styles.message}>
-          You don't have permission to access this page.
+          You do not have permission to access this page.
         </p>
         {requiredRoles && requiredRoles.length > 0 && (
           <p style={styles.roles}>
-            Required role{requiredRoles.length > 1 ? 's' : ''}: {requiredRoles.join(', ')}
+            Required role{requiredRoles.length > 1 ? 's' : ''}:{' '}
+            {requiredRoles.join(', ')}
           </p>
         )}
         <a href="/" style={styles.link}>
@@ -111,7 +114,8 @@ const styles = {
     minHeight: '100vh',
     backgroundColor: '#1e1e1e',
     color: '#e0e0e0',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif',
   },
   content: {
     textAlign: 'center',

@@ -1,6 +1,6 @@
 /**
  * UserProfile Component
- * 
+ *
  * Displays user profile information in the header with:
  * - User avatar (initials-based)
  * - Full name and role badge
@@ -32,7 +32,7 @@ const getInitials = (firstName, lastName, username) => {
 /**
  * Get primary role display name
  */
-const getPrimaryRoleLabel = (roles) => {
+const getPrimaryRoleLabel = roles => {
   // Priority order for display
   const roleLabels = {
     admin: 'Admin',
@@ -54,7 +54,7 @@ const getPrimaryRoleLabel = (roles) => {
 /**
  * Get role badge color
  */
-const getRoleBadgeColor = (roles) => {
+const getRoleBadgeColor = roles => {
   if (roles.includes('admin')) return '#dc3545';
   if (roles.includes('radiologist')) return '#28a745';
   if (roles.includes('provider')) return '#007bff';
@@ -71,7 +71,7 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
       }
@@ -83,7 +83,7 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
 
   // Close dropdown on escape key
   useEffect(() => {
-    const handleEscape = (event) => {
+    const handleEscape = event => {
       if (event.key === 'Escape') {
         setIsDropdownOpen(false);
       }
@@ -97,7 +97,11 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
     return null;
   }
 
-  const initials = getInitials(profile.firstName, profile.lastName, profile.username);
+  const initials = getInitials(
+    profile.firstName,
+    profile.lastName,
+    profile.username
+  );
   const roleLabel = getPrimaryRoleLabel(roles);
   const roleBadgeColor = getRoleBadgeColor(roles);
 
@@ -132,12 +136,19 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
       >
         <div className="user-avatar">{initials}</div>
         <div className="user-info">
-          <span className="user-name">{profile.fullName || profile.username}</span>
-          <span className="user-role" style={{ backgroundColor: roleBadgeColor }}>
+          <span className="user-name">
+            {profile.fullName || profile.username}
+          </span>
+          <span
+            className="user-role"
+            style={{ backgroundColor: roleBadgeColor }}
+          >
             {roleLabel}
           </span>
         </div>
-        <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
+        <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>
+          ▼
+        </span>
       </button>
 
       {isDropdownOpen && (
@@ -145,9 +156,14 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
           <div className="dropdown-header">
             <div className="dropdown-avatar">{initials}</div>
             <div className="dropdown-user-details">
-              <span className="dropdown-name">{profile.fullName || profile.username}</span>
+              <span className="dropdown-name">
+                {profile.fullName || profile.username}
+              </span>
               <span className="dropdown-email">{profile.email}</span>
-              <span className="dropdown-role" style={{ borderColor: roleBadgeColor, color: roleBadgeColor }}>
+              <span
+                className="dropdown-role"
+                style={{ borderColor: roleBadgeColor, color: roleBadgeColor }}
+              >
                 {roleLabel}
               </span>
             </div>
@@ -159,7 +175,13 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
             {onShowPreferences && (
               <li>
                 <button className="dropdown-item" onClick={handlePreferences}>
-                  <span className="dropdown-icon">⚙️</span>
+                  <span
+                    className="dropdown-icon"
+                    role="img"
+                    aria-label="settings"
+                  >
+                    ⚙️
+                  </span>
                   {t('Preferences')}
                 </button>
               </li>
@@ -167,14 +189,22 @@ const UserProfile = ({ t, userManager, onShowPreferences, onShowAbout }) => {
             {onShowAbout && (
               <li>
                 <button className="dropdown-item" onClick={handleAbout}>
-                  <span className="dropdown-icon">ℹ️</span>
+                  <span
+                    className="dropdown-icon"
+                    role="img"
+                    aria-label="information"
+                  >
+                    ℹ️
+                  </span>
                   {t('About')}
                 </button>
               </li>
             )}
             <li>
               <button className="dropdown-item" onClick={handleLogout}>
-                <span className="dropdown-icon">🚪</span>
+                <span className="dropdown-icon" role="img" aria-label="logout">
+                  🚪
+                </span>
                 {t('Logout')}
               </button>
             </li>
