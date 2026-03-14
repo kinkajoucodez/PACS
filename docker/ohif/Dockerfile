@@ -14,7 +14,6 @@ COPY platform/i18n/package.json ./platform/i18n/
 
 # Copy extension package manifests
 COPY extensions/cornerstone/package.json ./extensions/cornerstone/
-COPY extensions/default/package.json ./extensions/default/ 2>/dev/null || true
 COPY extensions/dicom-html/package.json ./extensions/dicom-html/
 COPY extensions/dicom-microscopy/package.json ./extensions/dicom-microscopy/
 COPY extensions/dicom-pdf/package.json ./extensions/dicom-pdf/
@@ -24,7 +23,13 @@ COPY extensions/dicom-tag-browser/package.json ./extensions/dicom-tag-browser/
 COPY extensions/lesion-tracker/package.json ./extensions/lesion-tracker/
 COPY extensions/vtk/package.json ./extensions/vtk/
 
-RUN yarn install --frozen-lockfile
+# Copy local custom extension manifests so yarn workspaces resolves them locally
+RUN mkdir -p extensions/worklist extensions/reporting extensions/pacs-admin
+COPY extensions/worklist/package.json ./extensions/worklist/
+COPY extensions/reporting/package.json ./extensions/reporting/
+COPY extensions/pacs-admin/package.json ./extensions/pacs-admin/
+
+RUN yarn install
 
 # Copy all source files
 COPY . .
