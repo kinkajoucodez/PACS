@@ -144,6 +144,44 @@ docker compose build ohif
 docker compose up -d ohif
 ```
 
+## Build Notes
+
+### Self-contained build (no external DNS required)
+
+The OHIF Docker image build removes any external CDN script tags from the generated
+`platform/viewer/dist/index.html` at build time:
+
+- **polyfill.io** — the CDN is patched out because it may be unreachable in
+  DNS-restricted or air-gapped environments. The OHIF bundles already include
+  any required polyfills for supported browsers.
+- **Service-worker bootstrap** (`/init-service-worker.js`) — the Workbox SW
+  registration tag is removed so the app loads its JS bundles directly without
+  depending on service-worker registration succeeding (avoids startup hangs).
+
+The resulting image is fully self-contained on `localhost:3000`.
+
+### OHIF runtime configuration (legacy shape)
+
+`docker/ohif/ohif-config.js` uses `window.config.servers.dicomWeb[]`, which is
+the correct config shape for **OHIF viewer 4.12.23** (the version in this repo).
+Newer OHIF versions use `dataSources` / `modes` / `extensions` — do **not** use
+those keys with this build.
+
+### Verifying Orthanc connectivity from the OHIF container
+
+After `docker compose up`, confirm the proxy is working:
+
+```bash
+# List studies via the proxied DICOMweb endpoint (returns [] when empty, or a JSON array)
+curl -s http://localhost:3000/orthanc/dicom-web/studies
+
+# Or via the top-level Nginx reverse proxy
+curl -s http://localhost/orthanc/dicom-web/studies
+```
+
+Expected output: an empty JSON array `[]` when no studies have been uploaded yet,
+or a JSON array of study objects after uploading DICOM data.
+
 ## Troubleshooting
 
 ### Orthanc fails to start
@@ -157,8 +195,9 @@ docker compose logs postgres
 ### OHIF shows "No studies found"
 
 1. Confirm Orthanc is running: http://localhost/orthanc/
-2. Upload a test DICOM study via the Orthanc UI
-3. Refresh the OHIF study list
+2. Verify the DICOMweb proxy: `curl -s http://localhost/orthanc/dicom-web/studies`
+3. Upload a test DICOM study via the Orthanc UI
+4. Refresh the OHIF study list
 
 ### Keycloak import fails
 
